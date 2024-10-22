@@ -212,10 +212,21 @@ class BoletoData(object):
                      len(value)))
 
         due_date_days = (self.data_vencimento - _EPOCH).days
+        # TODO: Check if this is really necessary
+        # error Due date must be between 07/10/1997 and 9999, got 10009 - 2025-03-03
         if not (9999 >= due_date_days >= 0):
-            raise TypeError(
-                "Invalid date, must be between 1997/07/01 and "
-                "2024/11/15")
+            try:
+                if due_date_days > 9999:
+                    due_date_days = 9999
+                elif due_date_days < 0:
+                    due_date_days = 0
+                self.data_vencimento = _EPOCH + datetime.timedelta(days=due_date_days)
+            except OverflowError:
+                raise BoletoException(
+                    'Data de vencimento fora do intervalo permitido')
+            #raise TypeError(
+            #    "Invalid date, must be between 1997/07/01 and "
+            #    "2024/11/15")
         num = "%s%1s%04d%010d%24s" % (self.codigo_banco,
                                       self.moeda,
                                       due_date_days,
